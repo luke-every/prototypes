@@ -1,0 +1,964 @@
+:root{
+    --ink:#221C18; --ink-soft:#6B6560; --ink-mute:#9A938C;
+    --orange:#EF6C2D; --orange-d:#E05A1B;
+    --dark:#3B322C; --dark-2:#4A403A;
+    --cream:#F6F3ED; --tile:#F1EEE7; --line:#E4E0D8;
+    --green:#D7EBC2;
+    /* named styles from Figma 293:23807 */
+    --hero-green:#D0E9C0; --protein:#D7EBC2;
+    --smokey:#372D27; --near:#110D0A; --lite:#575757; --brown:#423D3A;
+    --g1:#EEEAE6; --g2:#DAD6D2; --g3:#BDB3A9;
+    /* every quiz screen — intro, questions, interstitials and the loader —
+       sits on this one colour */
+    --quizbg:#EEEAE6;
+    /* The floating footer is 144px tall (56px button, 64px above, 24px below).
+       Steps reserve a little more than that: the button takes the drags that
+       land on it, so the last option needs clear space beneath it to grab. */
+    --footh:156px;
+    --signal:#FF7D34; --pos:#2A7A3B;
+    --ease:cubic-bezier(.25,.68,.15,1);
+    --soft:cubic-bezier(.22,.7,.3,1);   /* content arriving: eases out, never snaps */
+
+    /* ── INTRO TIMING · edit these two ──
+       The quiz sheet takes .62s to slide up, so the intro content waits before
+       it arrives — otherwise it animates behind the moving sheet and you never
+       see it. --intro-wait is that pause, --intro-speed how long each line
+       takes once it starts. */
+    --intro-wait:0.2s;
+    --intro-speed:.8s;
+    /* How long a question takes to arrive. Everything in a step reads from
+       this, so the pace is changed in one place. */
+    --step-in:.7s;
+    --swing:cubic-bezier(.32,.86,.24,1);
+    --spring:cubic-bezier(.34,1.42,.42,1);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  /* A real page, not a prototype on a desk: the document itself never scrolls
+     and never rubber-bands — the homepage, the quiz and the sheets each scroll
+     inside their own box, as they did in the phone frame. touch-action drops the
+     double-tap-to-zoom wait, so taps land at once; pinch zoom still works. */
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;overscroll-behavior:none;
+    touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{background:#fff;font-family:'Inter',-apple-system,sans-serif;color:var(--ink)}
+  /* The page fills the window exactly. Fixed to all four edges rather than
+     100vh: in iOS Safari 100vh is the height with the toolbars hidden, which
+     puts the bottom bars under the toolbar; fixed insets track the space that
+     is actually visible, in Safari and Chrome alike. */
+  .device{position:fixed;inset:0;background:var(--protein);overflow:hidden}
+
+  /* the quiz sheet — it comes up over the homepage and goes back down into it */
+  .phone{position:absolute;inset:0;z-index:40;background:var(--quizbg);
+    display:flex;flex-direction:column;
+    transform:translateY(100%);visibility:hidden;
+    transition:background .8s var(--ease),transform .62s var(--swing),visibility .62s}
+  .phone.open{transform:translateY(0);visibility:visible}
+  .phone.dark{background:var(--dark)}
+  /* the question screens sit on white; intro and the affirmation interstitials
+     keep the quiz's own ground colour */
+  .phone.white{background:#fff}
+  /* Bundle themes. --bundle is the section colour, --bundle-hero the hero's.
+     Protein keeps the two tones the Figma file specifies; the rest use the one
+     colour they were given for both. --reveal is what the loader fades to. */
+  .phone{--bundle:#D0E9C0;--bundle-hero:#D0E9C0}
+  .phone.t-better    {--bundle:#FFC273;--bundle-hero:#FFC273}
+  .phone.t-summer    {--bundle:#FFE473;--bundle-hero:#FFE473}
+  .phone.t-portions  {--bundle:#F2E5F4;--bundle-hero:#F2E5F4}
+  .phone.t-postpartum{--bundle:#F8E8B7;--bundle-hero:#F8E8B7}
+  .phone{--reveal:var(--bundle-hero)}
+  /* The dark band at the top of the results and the bundle chip under it are
+     the hero's own colour with 80% black over it. Change a bundle's colour and
+     both follow it, rather than being a second hex to keep in sync. */
+  .phone{--banner:color-mix(in srgb, #000 80%, var(--bundle-hero))}
+  .phone.bundle{background:var(--reveal)}
+
+  /* The same navigation as the homepage, carried across every step of the quiz
+     so the cart is never more than a tap away. It sits above the scroller, not
+     inside it, so rebuilding a step never takes it away. */
+  /* It arrives with the results, once there is a cart worth getting back to,
+     and overlays them on a blur so the page passes underneath it. */
+  /* White to begin with, because it opens over the dark promo band, and dark
+     once light content has scrolled under it. Only the content changes colour —
+     the ground stays the blur either way. */
+  .qnav{position:absolute;left:0;right:0;top:0;z-index:25;
+    display:none;align-items:center;gap:10px;padding:16px 20px;color:#fff;
+    transition:color .3s var(--ease);
+    -webkit-backdrop-filter:blur(14px) saturate(1.2);
+    backdrop-filter:blur(14px) saturate(1.2);
+    /* all but transparent — the ground is the blur itself, not a white wash.
+       A backdrop-filter needs a painted background to apply to, so this is as
+       close to nothing as it can be while still working. */
+    background:rgba(255,255,255,.01)}
+  .qnav.light{color:var(--near)}
+  .phone.bundle .qnav{display:flex}
+  .qnav .logo{flex:1;padding:0;border:none;background:none;cursor:pointer;
+    text-align:left;font-family:inherit;font-size:23px;font-weight:600;
+    letter-spacing:-.6px;color:inherit}
+  .qnav .nicon{width:40px;height:40px;border-radius:50%;border:1px solid currentColor;
+    display:flex;align-items:center;justify-content:center;opacity:.9}
+  .qnav .nicon svg{width:21px;height:21px}
+  .qnav .cart{position:relative;transition:border-color .3s var(--ease)}
+  .cartdot{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;
+    border-radius:999px;background:var(--orange);color:#fff;
+    font-size:10px;font-weight:600;line-height:18px;text-align:center;
+    padding:0 5px;box-sizing:border-box;
+    opacity:0;transform:scale(.4);
+    transition:opacity .2s var(--ease),transform .38s var(--spring)}
+  .qnav .cart.full{border-color:var(--orange)}
+  .qnav .cart.full .cartdot{opacity:1;transform:none}
+  /* a nudge each time something lands in it */
+  @keyframes cartPop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+  .qnav .cart.bump{animation:cartPop .45s var(--ease)}
+  .qnav .burger{width:26px;display:flex;flex-direction:column;gap:5px;margin-left:6px}
+  .qnav .burger i{height:1.5px;background:currentColor;border-radius:2px}
+  /* The promo band runs up behind the navigation, so the blur has something to
+     work on and the top of the page is not a strip of bare white. Its text
+     starts below the nav rather than under it. */
+  .phone.bundle .promo{padding-top:88px}
+  .screen{flex:1;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;position:relative;
+    overscroll-behavior:contain}
+  .screen::-webkit-scrollbar{width:0}
+  .pad{padding:0 24px}
+
+  /* ── question chrome ── */
+  .qtop{position:relative;z-index:3;display:flex;align-items:center;gap:12px;
+    padding:14px 20px 0;flex-shrink:0}
+  /* one bar, not seven: an orange shape that travels along a single track as
+     the quiz progresses, so the movement itself carries the sense of progress */
+  .prog{flex:1;height:7px;border-radius:99px;background:#EAE6DE;overflow:hidden}
+  .prog i{display:block;height:100%;width:0;border-radius:99px;background:var(--orange);
+    transition:width .62s var(--swing)}
+  .xbtn{width:30px;height:30px;border:none;background:none;cursor:pointer;font-size:19px;
+    color:var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
+  #close{font-size:15px}
+
+  h1{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:31px;line-height:1.16;
+    letter-spacing:-.012em;margin:0}
+
+  /* page-level transition between questions */
+  .page{display:flex;flex-direction:column;flex:1;min-height:0}
+  @keyframes pushIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes popIn{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:translateX(0)}}
+  .page.push{animation:pushIn var(--step-in) var(--ease) both}
+  .page.pop{animation:popIn var(--step-in) var(--ease) both}
+  @keyframes rise{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
+  .page h1,.page .qsub,.page .opts>*{animation:rise var(--step-in) var(--ease) both}
+  /* the intro is the one step that arrives while the sheet is still moving */
+  .page.intro h1,.page.intro .qsub,.page.intro li,.page.intro .introimg{
+    animation:rise var(--intro-speed) var(--ease)
+              calc(var(--intro-wait) + var(--step,0s)) both}
+
+  /* The step scrolls as one piece and the button floats over the bottom of it,
+     so a long question is still reachable on a short screen. The body carries
+     the button's height as padding so nothing ends up underneath it. */
+  .qbody{padding:30px 24px var(--footh);flex:1;display:flex;flex-direction:column}
+  /* the satisfaction slider auto-advances on its own and never shows a
+     footer, so it doesn't need the footer's reserve at the bottom */
+  .qbody.sat{padding-bottom:30px}
+  .qsub{font-size:15px;color:var(--ink-soft);margin:10px 0 0}
+  .opts{margin-top:26px;display:flex;flex-direction:column;gap:12px;padding-bottom:20px}
+  .opts.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  /* Press feedback lives on the press itself: the option scales down while the
+     finger is held and springs back the instant it lifts. Nothing is played
+     after the tap — the only thing release changes is outline and tick. */
+  .opt-t,.opt-r{
+    transition:transform .26s var(--spring),border-color .2s var(--ease),
+               background .2s var(--ease),color .2s var(--ease)}
+  .opt-t:active,.opt-r:active{transform:scale(.955);transition:transform .09s ease-out}
+
+  /* the tick that marks a chosen option */
+  .tick{width:22px;height:22px;border-radius:50%;background:var(--orange);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;
+    opacity:0;transform:scale(.55);transition:opacity .3s var(--ease),transform .44s var(--spring)}
+  [aria-pressed="true"]>.tick{opacity:1;transform:scale(1)}
+
+  /* single select — tile */
+  .opt-t{position:relative;background:#fff;border:1px solid var(--quizbg);border-radius:18px;
+    padding:26px 14px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;
+    font-family:inherit;font-size:14.5px;line-height:1.35;color:var(--ink);text-align:center;
+    cursor:pointer;min-height:152px;justify-content:center}
+  .opt-t .ic{font-size:40px;line-height:1}
+  .opt-t>.tick{position:absolute;top:11px;right:11px}
+  /* the border stays 1px throughout — the extra weight when selected is an
+     inset shadow, not a wider border, so nothing shifts layout on toggle */
+  .opt-t[aria-pressed="true"]{border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange)}
+
+  /* multi select — row */
+  .opt-r{background:#fff;border:1px solid var(--quizbg);border-radius:16px;
+    padding:0 16px 0 14px;height:64px;display:flex;align-items:center;gap:14px;
+    font-family:inherit;font-size:15px;color:var(--ink);text-align:left;cursor:pointer}
+  .opt-r .ic{font-size:26px;width:38px;text-align:center;flex-shrink:0}
+  .opt-r .lb{flex:1;min-width:0}
+  .opt-r>.tick{flex-shrink:0}
+  .opt-r[aria-pressed="true"]{border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange)}
+
+  /* Footer — pinned to the bottom of the sheet. It fades from nothing into the
+     quiz's own ground rather than sitting on a hard band, so content passing
+     under it is visibly cut off and reads as "there is more to scroll". */
+  .foot{position:absolute;left:0;right:0;bottom:0;z-index:12;
+    display:flex;gap:12px;align-items:center;padding:64px 24px 24px;
+    /* solid by 60% of the way down, and it stays solid from there */
+    background:linear-gradient(to bottom,
+      color-mix(in srgb, var(--quizbg) 0%, transparent) 0%,
+      var(--quizbg) 60%);
+    pointer-events:none}
+  .foot>*{pointer-events:auto}
+  .foot:empty{display:none}
+  /* on the white question screens the same fade runs into white instead */
+  .phone.white .foot{background:linear-gradient(to bottom,
+    color-mix(in srgb, #fff 0%, transparent) 0%, #fff 60%)}
+  .fspace{flex:1;height:56px}
+  .cta{flex:1;height:56px;border-radius:999px;border:none;background:var(--orange);color:#fff;
+    font-family:inherit;font-size:14px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+    cursor:pointer;transition:opacity .3s var(--ease),transform .3s var(--ease),background .2s}
+  .cta[disabled]{opacity:.35;cursor:default}
+  /* on multi-select the Continue button holds its space before it is earned,
+     so the question above it never shifts when the first option is picked */
+  .cta.hid{opacity:0;transform:translateY(6px);pointer-events:none}
+  .cta:active{background:var(--orange-d)}
+
+  /* ── affirmation step ──
+     A pause between questions: an icon, a headline and a line. Nothing to tap
+     but Continue, so it is set in the middle of the screen rather than at the
+     top like a question. */
+  .page.aff{justify-content:center;padding-bottom:30px}
+  .affwrap{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .affimg{width:270px;aspect-ratio:1;margin-bottom:28px;
+    background:no-repeat center/cover;
+    animation:rise var(--step-in) var(--ease) .04s both}
+  /* the small print under a claim */
+  .affnote{margin:14px 0 0;max-width:34ch;font-size:12px;line-height:16px;color:var(--ink-mute);
+    animation:rise var(--step-in) var(--ease) .16s both}
+  .affeb{margin:0 0 10px;font-size:12px;line-height:16px;letter-spacing:1.1px;
+    text-transform:uppercase;font-weight:500;color:var(--orange);
+    animation:rise var(--step-in) var(--ease) .08s both}
+  .page.aff h1{font-size:27px;line-height:1.2;max-width:19ch;
+    animation:rise var(--step-in) var(--ease) .1s both}
+  .page.aff .qsub{max-width:30ch;margin-top:14px;animation-delay:.12s}
+
+  /* ── the intro's stack of photographs ──
+     Four cards dealt in a loop: the front one is sent off to the left and comes
+     back at the bottom of the pile. `data-pos` is the only thing JavaScript
+     sets; every position is described here. */
+  .intro-body{justify-content:center}
+  .page.intro{justify-content:center;align-items:center;text-align:center;}
+  .page.intro h1{font-size:33px;max-width:16ch}
+  .page.intro .qsub{max-width:30ch;margin-top:12px}
+  .stack{position:relative;width:min(62%,218px);aspect-ratio:1;margin:0 auto 40px;
+    animation:rise var(--intro-speed) var(--ease) var(--intro-wait) both}
+  .scard{position:absolute;inset:0;border-radius:22px;
+    background:#fff no-repeat center/cover;
+    box-shadow:0 8px 24px rgba(26,22,20,.14);
+    transition:transform .55s var(--swing),opacity .4s var(--ease)}
+  .scard[data-pos="0"]{transform:none;z-index:4}
+  .scard[data-pos="1"]{transform:translateY(11px) scale(.94);z-index:3}
+  .scard[data-pos="2"]{transform:translateY(22px) scale(.88);z-index:2}
+  .scard[data-pos="3"]{transform:translateY(33px) scale(.82);z-index:1}
+  .scard.away{transform:translateX(-124%) rotate(-10deg);opacity:0;z-index:5}
+  .scard.snap{transition:none}
+
+  /* ── the image intro ──
+     A single square image sits above the heading, on the same centred layout
+     as the card intro below. */
+  .qbody.photo{justify-content:center}
+  .page.intro.photo{justify-content:center;align-items:center;text-align:center;}
+  .introimg{width:300px;max-width:100%;aspect-ratio:1;object-fit:cover;margin:0 auto 40px}
+  .page.intro.photo h1{font-size:33px;max-width:16ch}
+  .page.intro.photo .qsub{max-width:30ch;margin-top:12px}
+
+  /* ── slider question ── */
+  /* centred when there is room; when there is not, `safe` stops the centring
+     spilling out of both ends of the scroller and over the footer */
+  /* Two regions: the face sits in the middle of whatever space is going, the
+     answer and the slider sit at the foot of the step. */
+  .satwrap{flex:1;min-height:0;display:flex;flex-direction:column}
+  .sattop{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  .satbot{flex-shrink:0}
+  /* The drawing is the one part of this step that can give: it takes whatever
+     height is left after the hint, the label, the slider and the footer's
+     reserve, so the step fits the screen instead of scrolling. Height drives
+     it and the aspect ratio gives the width, which is why it flexes at all. */
+  .satart{position:relative;height:min(286px,100%);aspect-ratio:1;width:auto;
+    color:var(--ink);container-type:size}
+  /* Either the drawings or the faces, stacked in the same square and swapped
+     with the same fade. `>*` rather than `svg`, so both kinds are covered. */
+  .satart>*{position:absolute;inset:0;width:100%;height:100%;
+    opacity:0;filter:blur(11px);transform:scale(.86);
+    transition:opacity .4s var(--ease),filter .4s var(--ease),transform .4s var(--ease)}
+  .satart>*.on{opacity:1;filter:blur(0);transform:scale(1)}
+  .satart>*.pop{animation:artPop .46s var(--ease)}
+  .satart.faces{width:150px;height:150px;container-type:normal}
+  .satart .emo{display:flex;align-items:center;justify-content:center;
+    font-size:132px;line-height:1}
+  @keyframes artPop{0%{transform:scale(.86);filter:blur(11px);opacity:0}
+    55%{transform:scale(1.07);filter:blur(0);opacity:1}
+    100%{transform:scale(1);filter:blur(0);opacity:1}}
+  .satzone{font-size:22px;line-height:28px;letter-spacing:-.3px;font-weight:500;
+    text-align:center;margin:0 0 18px;min-height:28px;color:var(--ink)}
+  /* ── the satisfaction slider ──
+     Five points, dragged freely and snapped to the nearest on release. The
+     knob is the full height of the track, and the fill runs from the far left
+     to the middle of the knob so the track reads as filling up. Layering is
+     track, then the dots, then the fill over them, then the knob. */
+  .s5{position:relative;height:48px;touch-action:none;user-select:none;cursor:grab}
+  .s5:active{cursor:grabbing}
+  .s5t{position:absolute;inset:0;border-radius:24px;background:#E3DFD9;overflow:hidden}
+  .s5dots{position:absolute;inset:0;z-index:1;pointer-events:none}
+  .s5dots i{position:absolute;top:50%;width:6px;height:6px;border-radius:50%;
+    background:rgba(55,45,39,.26);transform:translate(-50%,-50%)}
+  .s5f{position:absolute;left:0;top:0;bottom:0;z-index:2;border-radius:999px;
+    min-width:48px;
+    background:linear-gradient(90deg,rgba(239,108,45,.6),rgba(239,108,45,1));
+    transition:width .52s var(--spring)}
+  .s5k{position:absolute;left:0;top:0;z-index:3;width:48px;height:48px;
+    transition:transform .52s var(--spring)}
+  .s5k span{display:block;width:100%;height:100%;border-radius:50%;background:#fff;
+    box-shadow:0 2px 10px rgba(26,22,20,.22);
+    transition:transform .34s var(--spring)}
+  .s5k:focus-visible{outline:none}
+  .s5k:focus-visible span{box-shadow:0 0 0 3px rgba(239,108,45,.45),0 2px 10px rgba(26,22,20,.22)}
+  /* held: the knob swells, and neither it nor the fill lags behind the finger */
+  .s5.press .s5k span{transform:scale(1.16)}
+  .s5.drag .s5k,.s5.drag .s5f{transition:none}
+  .ends{display:flex;justify-content:space-between;font-size:13.5px;color:var(--ink-soft);margin-top:10px}
+
+  /* ── loader ──
+     A full-bleed overlay that carries the colour story itself: it crossfades in
+     as brown over the question just answered, and at the end crossfades brown →
+     green, so the results page is already the right colour when it clears. */
+  .load{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;background:var(--quizbg);color:var(--ink);opacity:0;
+    transition:opacity .7s var(--ease),background-color .9s var(--ease),color .9s var(--ease)}
+  .load.in{opacity:1}
+  .load.green{background:var(--reveal);color:var(--ink)}
+  .load.out{opacity:0}
+  /* the button that hands over to the results, in the quiz's own footer spot */
+  .lfoot{position:absolute;left:24px;right:24px;bottom:24px;display:flex}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* phase one — ring, title and checklist move as one group */
+  .lphase{display:flex;flex-direction:column;align-items:center;
+    opacity:0;transform:translateY(10px);
+    transition:opacity .55s var(--ease),transform .6s var(--ease)}
+  .lphase.in{opacity:1;transform:none}
+  .lphase.out{opacity:0;transform:translateY(-10px);
+    transition:opacity .45s var(--ease),transform .45s var(--ease)}
+  /* where the spinner used to be: one square picture, its own file in img/ */
+  /* Two drawings on the same 142x160 bounds, stacked so they read as one. The
+     base holds still and the heart drifts, which is the whole loading state. */
+  .lpic{position:relative;width:min(46%,142px);aspect-ratio:142/160;margin-bottom:32px}
+  .lpic img{position:absolute;inset:0;width:100%;height:100%}
+  @keyframes heartFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  .lheart{animation:heartFloat 1.6s var(--soft) infinite}
+  @media (prefers-reduced-motion:reduce){.lheart{animation:none}}
+  .load h1{color:inherit;font-size:30px;margin:0 0 26px;text-align:center;max-width:14ch}
+
+  /* the checklist — one generic line per thing being worked out */
+  .lchecks{display:flex;flex-direction:column;gap:13px;align-items:flex-start}
+  .lline{display:flex;align-items:center;gap:11px;font-size:15px;
+    color:rgba(34,28,24,.66);opacity:0;transform:translateY(9px);
+    transition:opacity .55s var(--ease),transform .6s var(--ease)}
+  .lline.in{opacity:1;transform:none}
+  .lico{width:19px;height:19px;flex-shrink:0;position:relative}
+  .lico .sp{position:absolute;inset:0;border-radius:50%;
+    border:2px solid rgba(34,28,24,.18);border-top-color:var(--orange);
+    animation:spin 1.25s linear infinite;transition:opacity .3s}
+  .lico .ck{position:absolute;inset:0;border-radius:50%;background:var(--orange);
+    display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;
+    opacity:0;transform:scale(.4);transition:.35s var(--spring)}
+  .lico.done .sp{opacity:0}
+  .lico.done .ck{opacity:1;transform:scale(1)}
+  /* ══════════ RESULTS ══════════
+     Built to Figma 293:23807. Tokens below are that file's named styles. */
+
+  /* Shared reveal — hero children arrive as the loader clears.
+     This is a keyframe animation rather than a transition on purpose. Some of
+     these elements are also buttons, which declare their own `transition` for
+     the press feedback; `transition` is a single property, so whichever rule
+     came last used to win outright and the reveal lost its opacity entirely
+     while inheriting the press curve's overshoot. An animation can't be
+     clobbered that way, and it keeps fade and movement on one timeline.
+     It moves with `translate`, not `transform`, so a press scale composes
+     with it instead of replacing it. */
+  @keyframes rvIn{from{opacity:0;translate:0 12px}to{opacity:1;translate:none}}
+  .rv{opacity:0}
+  .rv.in{animation:rvIn .85s var(--soft) both}
+  /* swapping bundle is a comparison, not an arrival: the page crossfades as a
+     whole, so the hero's own reveal is skipped */
+  .rv.in.instant{animation:none;opacity:1}
+
+  .res{display:block;min-height:100%;background:#fff;
+    transition:opacity .2s var(--ease)}
+  .res.hide{opacity:0}
+  /* the screen is a flex column, so every section and every stacked block in
+     one has to keep its own height rather than be squeezed into the viewport */
+  .screen>.res,.res>*,.rhero>*,.rwhy>*,.rbox>*,.rplan>*,.rgreen>*,.rfaq>*,.rbundles>*{flex-shrink:0}
+  .rbtn{width:100%;border:none;cursor:pointer;font-family:inherit;color:#fff;
+    transition:transform .24s var(--spring),background .2s var(--ease)}
+  .rbtn:active{transform:scale(.975);transition:transform .09s ease-out}
+
+  /* ── promo bar ──
+     Dark green, and the hero is pulled up over its lower half so the bar reads
+     as sitting behind it rather than as a band of its own. */
+  .promo{margin:0;background:var(--banner);color:#fff;text-align:center;
+    padding:12px 24px 44px;font-size:12px;line-height:16px}
+
+  /* ── hero ── */
+  .rhero{position:relative;margin-top:-32px;background:var(--bundle-hero);
+    padding:40px 0 40px;border-radius:32px;
+    display:flex;flex-direction:column;gap:24px;overflow:hidden}
+  h1.rtitle{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:34px;
+    line-height:34px;letter-spacing:-.68px;color:var(--smokey);margin:0 24px}
+  h1.rtitle i{font-style:italic}
+  /* the quiz read back as chips: they wrap onto as many lines as they need */
+  .rchips{display:flex;flex-wrap:wrap;gap:8px;margin:-12px 48px 0 24px}
+  .rchip{display:flex;align-items:center;gap:5px;background:rgba(55,45,39,.08);
+    border-radius:999px;padding:4px 8px;font-size:14px;line-height:20px;
+    letter-spacing:-.28px;color:#000}
+  .rchip svg{width:14px;height:14px;flex-shrink:0;color:var(--smokey)}
+  /* The bundle's own photographs, drifting slowly past. The marquee runs edge
+     to edge, so it steps outside the hero's padding; no left padding on the
+     track either, which keeps the -50% loop landing exactly on one set plus
+     one gap. */
+  .mq{overflow:hidden}
+  .mqtrack{display:flex;gap:16px;width:max-content;
+    animation:mqdrift 50s linear infinite}   /* ~18px/s across four photos */
+  /* longhands, not the shorthand: a var() inside a multi-value `background`
+     drops the whole declaration if substitution fails, and the photos end up
+     tiling at their natural size instead of covering the card */
+  .mqtrack .mqc{width:211px;height:264px;border-radius:16px;flex-shrink:0;
+    background-color:#fff;background-repeat:no-repeat;
+    background-position:center;background-size:cover}
+  /* the track holds the set twice, so -50% lands exactly on the seam */
+  @keyframes mqdrift{to{transform:translateX(calc(-50% - 8px))}}
+  .mq:hover .mqtrack{animation-play-state:paused}
+  @media (prefers-reduced-motion:reduce){.mqtrack{animation:none}}
+  /* The muting is alpha on the colour, not opacity on the element. `opacity`
+     belongs to the reveal animation: an element that also sets its own would
+     both show through before its turn and land on full strength afterwards. */
+  .rsub{margin:0 24px;font-size:16px;line-height:22px;letter-spacing:-.32px;
+    color:var(--smokey)}
+
+  .rbtn.dark{height:40px;border-radius:30px;background:var(--smokey);
+    font-size:12px;font-weight:500;line-height:1;letter-spacing:1.8px;text-transform:uppercase}
+
+  /* ── the hero's carousel (variant A) ──
+     324px squares with 16px between them, held to the left so the next one is
+     only just showing. It scrolls with a snap, so a swipe lands on a picture. */
+  .carousel{display:flex;gap:16px;overflow-x:auto;padding:0 24px;
+    scroll-snap-type:x mandatory;scroll-padding-left:24px}
+  .carousel::-webkit-scrollbar{height:0}
+  .ccard{flex:0 0 324px;aspect-ratio:1;border-radius:20px;scroll-snap-align:start;
+    background-color:#fff;background-repeat:no-repeat;
+    background-position:center;background-size:cover}
+
+  /* ── the bundle chip above the headline (variant B) ── */
+  .btag{align-self:flex-start;margin:0 24px;background:var(--banner);
+    border-radius:999px;padding:4px 8px;font-size:12px;line-height:16px;
+    letter-spacing:-.24px;font-weight:500;color:#fff}
+
+  /* ── why this one, for you (variant B) ──
+     The bundle's own argument: a headline written per bundle, the quiz read
+     back as tags, and four cards — the first two written for the challenge
+     they picked first. */
+  .bwhy{background:#fff;padding:56px 0 56px;display:flex;flex-direction:column;gap:20px}
+  .bwhy h2{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:34px;
+    line-height:34px;letter-spacing:-.68px;color:var(--smokey);margin:0 24px}
+  .bwhy h2 i{font-style:italic}
+  .bwhy .rchips{margin:0 24px}
+  /* each card is as tall as its own text: stretched to a common height, the
+     shorter ones were left with dead space under the paragraph */
+  .crail{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;padding:4px 24px 0;
+    scroll-snap-type:x mandatory;scroll-padding-left:24px}
+  .crail::-webkit-scrollbar{height:0}
+  .ccard2{flex:0 0 250px;scroll-snap-align:start;background:var(--g1);
+    border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+  .ccard2 .ci{height:220px;background:no-repeat center/cover}
+  .ccard2 p{margin:0;padding:0 16px 24px;font-size:14px;line-height:19px;
+    letter-spacing:-.28px;color:rgba(55,45,39,.6)}
+  .ccard2 b{font-weight:500;color:var(--smokey)}
+
+  /* ── what's in your box ──
+     One rail per section, each running off the right-hand edge so it reads as
+     a menu you scroll rather than a grid that happens to be cut off. */
+  .rbox{background:#fff;padding:48px 0 32px}
+  .rbox>h2{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:34px;
+    line-height:34px;letter-spacing:-.68px;color:var(--near);margin:0 24px 16px}
+  /* the average meal, as a card above the menu (Figma 5254:34484) */
+  .avgcard{margin:0 24px 24px;background:color-mix(in srgb, var(--bundle) 25%, transparent);border-radius:16px;
+    padding:16px 18px 20px;display:flex;flex-direction:column;gap:12px;align-items:center}
+  .avgt{margin:0;font-size:14px;line-height:19px;letter-spacing:-.28px;
+    font-weight:500;color:var(--smokey)}
+  .avgrow{display:flex;width:100%}
+  .avg1{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .avg1 .n{display:flex;align-items:baseline;gap:2px;color:var(--smokey)}
+  .avg1 .n b{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:34px;
+    line-height:34px;letter-spacing:-.68px}
+  .avg1 .n s{text-decoration:none;font-size:14px;line-height:19px;letter-spacing:-.28px}
+  .avg1 .l{font-size:14px;line-height:19px;letter-spacing:-.28px;color:rgba(55,45,39,.6)}
+  /* two columns of dishes, six of them, with the rest behind the button */
+  .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 24px}
+  .mgrid .rcard{flex:none;width:100%}
+  .ghost2{display:block;width:calc(100% - 48px);margin:16px 24px 0;height:40px;
+    border-radius:30px;background:none;cursor:pointer;border:.5px solid var(--smokey);
+    font-family:inherit;font-size:12px;font-weight:500;letter-spacing:1.8px;
+    color:var(--near);transition:transform .24s var(--spring),background .2s var(--ease)}
+  .ghost2:active{transform:scale(.98);transition:transform .09s ease-out}
+  .mcat{padding-bottom:32px}
+  .mct{margin:0 24px 12px;font-size:20px;line-height:22px;letter-spacing:-.4px;color:var(--near)}
+  /* padding rather than spacer pseudo-elements: a spacer is a flex item, so
+     the gap was landing on top of it and the first card sat 12px in from the
+     24px every other section starts on */
+  .mrail{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;padding:0 24px;scroll-padding-left:24px}
+  .mrail::-webkit-scrollbar{height:0}
+  /* the whole card opens the recipe, photograph and name alike */
+  .rcard{flex:0 0 165px;min-width:0;padding:0;border:none;background:none;font-family:inherit;
+    text-align:left;cursor:pointer;display:block;
+    transition:transform .24s var(--spring)}
+  .rcard:active{transform:scale(.97);transition:transform .09s ease-out}
+  .rcard .mi{display:block;position:relative;aspect-ratio:1;border-radius:16px;
+    background:#EEE no-repeat center/cover}
+  /* the badge that says the card opens something; the card itself is the target */
+  .minfo{position:absolute;right:4px;bottom:4.5px;width:28px;height:28px;border-radius:14px;
+    background:rgba(255,255,255,.82);backdrop-filter:blur(2px);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Newsreader',Georgia,serif;font-style:italic;font-size:15px;line-height:1;
+    color:var(--near)}
+  .rcard h4{margin:8px 0 0;font-size:16px;line-height:22px;letter-spacing:-.32px;
+    font-weight:400;color:var(--lite)}
+
+  /* ── box size and price ── */
+  .rplan{background:#fff;border-radius:0 0 32px 32px;padding:24px 24px 48px;
+    display:flex;flex-direction:column;gap:16px}
+  .rplan h2{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:34px;
+    line-height:34px;letter-spacing:-.68px;color:var(--smokey);margin:0}
+  .sizes{display:flex;gap:8px;padding-top:12px}
+  .size{flex:1;position:relative;border-radius:16px;border:1px solid var(--g3);
+    background:#F4F4F4;padding:21px 11px;cursor:pointer;font-family:inherit;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    transition:transform .24s var(--spring),background .2s var(--ease),
+               border-color .2s var(--ease),box-shadow .2s var(--ease)}
+  .size:active{transform:scale(.96);transition:transform .09s ease-out}
+  .size[aria-pressed="true"]{background:#fff;border-color:var(--smokey);
+    box-shadow:0 4px 8px rgba(55,45,39,.12)}
+  .size .n{font-family:'Newsreader',Georgia,serif;font-size:20px;line-height:20px;
+    letter-spacing:-.4px;color:var(--smokey)}
+  .size .lb2{font-size:12px;line-height:16px;letter-spacing:-.24px;color:var(--smokey)}
+  .size .pr{padding-top:2px;font-size:12px;line-height:16px;letter-spacing:-.24px;
+    font-weight:500;color:var(--smokey)}
+  .size .tg{padding-top:6px;font-size:12px;line-height:17px;letter-spacing:-.24px;
+    text-align:center;color:var(--smokey);opacity:.75}
+  .size .tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+    background:var(--brown);color:#fff;font-size:8px;line-height:13px;letter-spacing:-.16px;
+    padding:4px 8px;border-radius:4px;white-space:nowrap}
+
+  .bd{border:1px solid var(--g3);border-radius:16px;overflow:hidden}
+  .bdhead{width:100%;border:none;font-family:inherit;cursor:pointer;
+    background:#fff;padding:14px 16px;
+    display:flex;align-items:center;justify-content:space-between}
+  .bdhead .t{font-size:14px;line-height:15px;letter-spacing:-.28px;font-weight:500;color:var(--smokey)}
+  .bdhead .r{display:flex;align-items:center;gap:8px}
+  .bdhead .fin{font-size:16px;line-height:22px;letter-spacing:-.32px;font-weight:500;color:var(--smokey)}
+  .was{font-size:12px;line-height:16px;letter-spacing:-.24px;color:var(--smokey);
+    opacity:.6;text-decoration:line-through}
+  .chev{width:24px;height:24px;flex-shrink:0;color:var(--smokey);
+    transition:transform .4s var(--ease)}
+  .bd.open .chev{transform:rotate(180deg)}
+  /* grid-rows is the one property that animates an unknown height cleanly */
+  .bdbody{background:#F4F4F4;display:grid;grid-template-rows:0fr;
+    transition:grid-template-rows .45s var(--ease)}
+  .bd.open .bdbody{grid-template-rows:1fr}
+  .bdbody>div{overflow:hidden}
+  .bdrow{border-top:1px solid var(--g3);padding:12px 16px 11px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .bdrow .k{font-size:12px;line-height:16px;letter-spacing:-.24px;font-weight:500;color:var(--smokey)}
+  .bdrow .rt{display:flex;align-items:center;gap:8px}
+  .bdrow .v{font-size:14px;line-height:15px;letter-spacing:-.28px;font-weight:500;color:var(--smokey)}
+  .bdrow .v.pos{color:var(--pos)}
+  .bdrow .v.plain{font-weight:400;line-height:19px}
+
+  /* the contents of the box, listed above the money (Figma 5382:11169) */
+  .bdwhat{background:#fff;padding:14px 16px 16px}
+  .bdnote{margin:0 0 12px;font-size:12px;line-height:16px;letter-spacing:-.24px;
+    color:var(--lite)}
+  .bdgift{display:flex;align-items:center;gap:8px;margin:0 0 12px;
+    font-size:14px;line-height:19px;letter-spacing:-.28px;font-weight:500;
+    color:var(--near)}
+  .bdgift i{font-style:normal;font-size:15px;line-height:1}
+  .bdlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+  .bdlist li{display:flex;gap:10px;font-size:14px;line-height:19px;
+    letter-spacing:-.28px;color:var(--smokey)}
+  .bdlist li::before{content:'\2713';flex-shrink:0;width:13px;color:var(--smokey)}
+
+  .bdrow.addon{gap:12px}
+  .bdrow.addon .ai{width:44px;height:44px;border-radius:10px;flex-shrink:0;
+    background:#EEE no-repeat center/cover}
+  .bdrow.addon .k{flex:1;min-width:0;font-weight:400}
+
+  .buy{display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:8px}
+  /* variant A's page end: room for the sticky add-to-cart bar, which can be
+     hovering over the last bit of scroll */
+  .gotobuy{padding-bottom:120px}
+  .subline{margin:0;font-size:12px;line-height:16px;letter-spacing:-.24px;
+    color:var(--smokey);text-align:center}
+
+  /* ── the content section (variant A) ──
+     The bundle's own colour, its headline, the marquee of photographs and four
+     points down a single line. Each point's picture is its own file, per
+     bundle: img/<prefix>-point1 … 4.png */
+  .rcontent{background:var(--bundle);border-radius:32px 32px 0 0;
+    padding:64px 0 48px;display:flex;flex-direction:column;gap:28px}
+  .rcontent h2{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:34px;
+    line-height:36px;letter-spacing:-.68px;color:var(--near);margin:0 24px}
+  .rcontent h2 i{font-style:italic}
+  .points{position:relative;margin:0 24px;display:flex;flex-direction:column;gap:28px}
+  /* the line the points hang from, behind the pictures */
+  .points::before{content:'';position:absolute;left:23px;top:24px;bottom:24px;
+    width:1px;background:rgba(55,45,39,.25)}
+  .point{position:relative;display:flex;gap:16px;align-items:flex-start}
+  .point .pi{width:46px;height:46px;border-radius:50%;flex-shrink:0;
+    background:#ffffff;color:#000;display:flex;align-items:center;justify-content:center;
+    font-size:18px;box-shadow:0 1px 3px rgba(55,45,39,.12)}
+  .point p{margin:0;padding-top:2px}
+  .point b{display:block;font-size:16px;line-height:22px;letter-spacing:-.32px;
+    font-weight:500;color:var(--near)}
+  .point span{display:block;margin-top:2px;font-size:13px;line-height:19px;
+    letter-spacing:-.26px;color:rgba(55,45,39,.72)}
+
+  /* ── questions and other bundles, on the bundle's own green ── */
+  .rgreen{background:#fff;border-radius:32px 32px 0 0;padding:48px 0}
+  .rfaq{padding:0 24px 24px}
+  .faqhead{display:flex;flex-direction:column;gap:12px;margin-bottom:48px}
+  .faqhead .eb{margin:0;font-size:12px;line-height:16px;letter-spacing:-.24px;
+    font-weight:500;color:var(--smokey)}
+  .faqhead h2{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:24px;line-height:26px;
+    letter-spacing:-.48px;color:var(--smokey);margin:0}
+  .faq{border-bottom:1px solid var(--g2)}
+  .faq:first-of-type{border-top:1px solid var(--g2)}
+  .faqq{width:100%;background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;
+    padding:20px 0;display:flex;gap:24px;align-items:center}
+  .faqq .qt{flex:1;font-size:16px;line-height:22px;letter-spacing:-.32px;
+    font-weight:500;color:var(--smokey)}
+  .pm{width:38px;height:38px;flex-shrink:0;position:relative;border-radius:8px;
+    border:1.5px solid rgba(17,13,10,.1);transition:border-color .25s var(--ease)}
+  .pm::before,.pm::after{content:'';position:absolute;left:50%;top:50%;background:var(--near);
+    transition:transform .4s var(--swing),opacity .3s var(--ease)}
+  .pm::before{width:12px;height:1.5px;transform:translate(-50%,-50%)}
+  .pm::after{width:1.5px;height:12px;transform:translate(-50%,-50%)}
+  .faq.open .pm{border-color:rgba(17,13,10,.28)}
+  .faq.open .pm::after{transform:translate(-50%,-50%) rotate(90deg);opacity:0}
+  .faqa{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s var(--ease)}
+  .faq.open .faqa{grid-template-rows:1fr}
+  .faqa>div{overflow:hidden}
+  .faqa p{margin:0 62px 20px 0;font-size:14px;line-height:20px;color:var(--lite)}
+
+  .rbundles{padding:42px 0 124px}
+  .rbundles h2{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:34px;line-height:34px;
+    letter-spacing:-.68px;color:#000;margin:0 24px 24px}
+  .brail{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;
+    padding:0 24px 48px;scroll-padding-left:24px}
+  .brail::-webkit-scrollbar{height:0}
+  /* Figma 5382:46017 — each card on a wash of the bundle's own colour, with a
+     dish and a moment side by side. */
+  .bcard{flex:0 0 280px;scroll-snap-align:center;background:#fff;border:1px solid var(--g1);
+    border-radius:28px;box-shadow:0 3px 12px rgba(55,45,39,.08);padding:20px;
+    display:flex;flex-direction:column}
+  .bcard .eb{margin:0 0 10px;font-size:10px;line-height:1;letter-spacing:1.2px;
+    text-transform:uppercase;font-weight:500;color:var(--smokey)}
+  .bcard h3{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:21.8px;
+    line-height:24.2px;letter-spacing:-.66px;color:var(--smokey);margin:0}
+  .bimgs{display:flex;gap:4px;margin:16px 0 0;border-radius:10px;overflow:hidden}
+  .bimgs span{flex:1;min-width:0;height:148px;background:#EEE no-repeat center/cover}
+  .bcard .bsub{margin:16px 0 0}
+  .bcard .blink{margin-top:14px}
+  .bcard .bimg{height:180px;border-radius:14px;position:relative;
+    background:#EEE no-repeat center/cover}
+  .bchip{position:absolute;top:16px;left:16px;height:14px;padding:0 4px;border-radius:20px;
+    background:var(--brown);color:#fff;font-size:8px;line-height:13px;letter-spacing:-.16px;
+    display:flex;align-items:center}
+  .bcard p{margin:0;font-size:13px;line-height:20.8px;color:var(--smokey)}
+  .bcard .blink{font-size:13px;font-weight:500;color:var(--smokey);text-decoration:underline}
+
+  /* ══════════ VARIANT B ══════════
+     The same sections, re-grounded: what is in the box and the box size sit on
+     the bundle's colour at half strength, and the questions sit on white. */
+  .phone.vb{--tint:color-mix(in srgb, var(--bundle) 50%, #fff)}
+  .phone.vb .rbox,.phone.vb .rplan{background:var(--tint)}
+  .phone.vb .rbox{border-radius:32px 32px 0 0;padding-top:64px}
+  .phone.vb .avgcard{background:rgba(255,255,255,.5)}
+
+  /* ── the bar that follows the page ── */
+  .stick{position:absolute;left:0;right:0;bottom:0;z-index:14;
+    background:var(--bundle-hero);box-shadow:0 -2px 6px rgba(55,45,39,.12);
+    padding:16px 16px 20px;display:flex;flex-direction:column;gap:16px;
+    opacity:0;transform:translateY(90px);pointer-events:none;
+    transition:opacity .45s var(--ease),transform .55s var(--swing)}
+  .stick.in{opacity:1;transform:none;pointer-events:auto}
+  .stick .addbtn{width:100%;height:40px;border-radius:30px;background:var(--smokey);color:#fff;
+    border:none;font-family:inherit;font-size:12px;font-weight:500;letter-spacing:1.8px;
+    text-transform:uppercase;cursor:pointer;transition:transform .24s var(--spring)}
+  .stick .addbtn:active{transform:scale(.975);transition:transform .09s ease-out}
+  /* the ground the menu sheet rises over, so the page behind it reads as
+     parked rather than as part of it. Tapping it closes the sheet. */
+  .sheetbd{position:absolute;inset:0;z-index:54;background:rgba(26,22,20,.45);
+    opacity:0;transition:opacity .4s var(--ease)}
+  .sheetbd.on{opacity:1}
+
+  /* ── recipe details (Figma 5382:58246) ──
+     A sheet that rises from the bottom over a dimmed page. It never takes more
+     than 85% of the frame, so the page it came from stays visible behind it,
+     and its body scrolls rather than the sheet growing. */
+  .rsheet{position:absolute;left:0;right:0;bottom:0;z-index:55;
+    max-height:85%;background:#fff;border-radius:28px 28px 0 0;overflow:hidden;
+    display:flex;flex-direction:column;box-shadow:0 -8px 30px rgba(26,22,20,.18);
+    transform:translateY(100%);transition:transform .5s var(--swing)}
+  .rsheet.open{transform:translateY(0)}
+  /* The full menu holds pages that are positioned inside it, so it needs a
+     height of its own rather than one its contents give it. A definite height
+     with bottom:0 also means translateY(100%) clears the frame on the way out —
+     pinning it with `top` as well over-constrained the box, and the browser
+     dropped `bottom`, leaving a gap under it and stranding it mid-close. */
+  .rsheet:not(.recipe){height:85%}
+  .rsgrab{flex-shrink:0;width:40px;height:4px;border-radius:2px;background:var(--g2);
+    margin:10px auto 0;transition:opacity .2s var(--ease)}
+  .rsheet.onmeal .rsgrab{display:none}
+  /* Tapping a dish inside the menu pushes a page across rather than opening a
+     second sheet over the first, so Back returns to where you were. */
+  .spages{flex:1;position:relative;overflow:hidden}
+  .spage{position:absolute;inset:0;display:flex;flex-direction:column;
+    background:#fff;transform:translateX(100%);
+    transition:transform .42s var(--swing),opacity .42s var(--ease)}
+  .spage.on{transform:none}
+  .spage.behind{transform:translateX(-26%);opacity:.45}
+  .rsback{position:absolute;top:14px;left:16px;z-index:2;
+    width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;
+    background:rgba(255,255,255,.92);color:var(--near);font-family:inherit;font-size:19px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 1px 3px rgba(26,22,20,.14);
+    opacity:0;transform:scale(.8);pointer-events:none;
+    transition:opacity .25s var(--ease),transform .3s var(--spring)}
+  .rsback.on{opacity:1;transform:none;pointer-events:auto}
+  .rsclose{position:absolute;top:14px;right:16px;z-index:3;
+    width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;
+    background:rgba(255,255,255,.92);color:var(--near);font-family:inherit;font-size:14px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 1px 3px rgba(26,22,20,.14);transition:transform .24s var(--spring)}
+  .rsclose:active{transform:scale(.9);transition:transform .09s ease-out}
+  .rsbody{flex:1;overflow-y:auto;overscroll-behavior:contain}
+  .rsbody::-webkit-scrollbar{width:0}
+  .rsbody.menu{padding:14px 24px 40px}
+  .rsbody .mgrid{margin:0}
+
+  /* the dish itself */
+  .rsimg{height:230px;background:#EEE no-repeat center/cover}
+  .rspad{padding:24px 24px 40px}
+  .rspad h2{margin:0;font-family:'Newsreader',Georgia,serif;font-weight:400;
+    font-size:34px;line-height:36px;letter-spacing:-.68px;color:var(--near)}
+  .rspad .rsp{margin:16px 0 0;font-size:15px;line-height:22px;letter-spacing:-.3px;
+    color:var(--smokey)}
+  /* protein, fibre, carbs, fat — one tile each */
+  .rsmac{display:flex;gap:8px;margin-top:24px}
+  .rsmac div{flex:1;min-width:0;background:#F4F4F4;border-radius:12px;
+    padding:14px 8px;text-align:center}
+  .rsmac b{display:flex;align-items:baseline;justify-content:center;gap:2px;
+    font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:24px;
+    line-height:26px;letter-spacing:-.48px;color:var(--near)}
+  .rsmac b s{text-decoration:none;font-family:'Inter',sans-serif;font-size:12px;
+    letter-spacing:-.24px;color:var(--lite)}
+  .rsmac span{display:block;margin-top:4px;font-size:11px;line-height:15px;
+    letter-spacing:.2px;color:var(--lite)}
+  .rsline{height:1px;background:var(--g2);margin:24px 0}
+  .rseb{margin:0;font-size:11px;line-height:15px;letter-spacing:.6px;color:var(--lite)}
+  .rsing{margin:12px 0 0;font-size:15px;line-height:22px;letter-spacing:-.3px;
+    color:var(--smokey)}
+
+  /* what people said */
+  .rsrate{display:flex;align-items:flex-end;gap:10px}
+  .rsrate b{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:30px;
+    line-height:30px;letter-spacing:-.6px;color:var(--near)}
+  .rsrt{display:flex;flex-direction:column;gap:2px}
+  .rsct{font-size:11px;line-height:15px;color:var(--lite)}
+  .rsstars{display:inline-flex;gap:1px;font-size:13px;line-height:1;color:var(--g3)}
+  .rsstars i{font-style:normal}
+  .rsstars i.on{color:var(--signal)}
+  /* half a star: the glyph in grey with an orange left half over it */
+  .rsstars i.half{position:relative;color:var(--g3)}
+  .rsstars i.half::before{content:'\2605';position:absolute;left:0;top:0;
+    width:50%;overflow:hidden;color:var(--signal)}
+  .rsrev{margin-top:12px;background:#F4F4F4;border-radius:12px;padding:16px}
+  .rsrev .rsrh{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .rsrev .rsn{font-size:14px;line-height:19px;letter-spacing:-.28px;font-weight:500;
+    color:var(--near)}
+  .rsrev p{margin:10px 0 0;font-size:13px;line-height:19px;letter-spacing:-.26px;
+    color:var(--smokey)}
+
+  .toast{position:absolute;left:20px;right:20px;bottom:96px;background:var(--ink);color:#fff;
+    border-radius:13px;padding:12px 15px;font-size:13px;z-index:60;opacity:0;transform:translateY(10px);
+    transition:.4s var(--ease);pointer-events:none}
+  .toast.on{opacity:1;transform:none}
+
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+
+  /* ══════════ HOMEPAGE (Figma 5355:67233) ══════════
+     Values taken from the file rather than eyeballed: the peach block is
+     #FFD392 with a 32px rounded foot, the photograph is 416px tall with the
+     navigation over it, and everything sits in a 24px gutter on a 393px frame. */
+  .landing{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;background:#fff;
+    overscroll-behavior:contain;
+    transition:transform .62s var(--swing),filter .62s var(--ease)}
+  .landing::-webkit-scrollbar{width:0}
+  .quizbd{position:absolute;inset:0;z-index:30;background:rgba(26,22,20,.45);
+    opacity:0;pointer-events:none;transition:opacity .45s var(--ease)}
+  .landing.behind ~ .quizbd{opacity:1}
+
+  /* ── section 1: hero ── */
+  .hhero{background:#FFD392;border-radius:0 0 32px 32px;padding-bottom:32px;
+    margin-top:-72px}
+
+  /* the banner and the navigation ride together at the top */
+  .htop{position:sticky;top:0;z-index:20}
+  .hbanner{position:relative;background:#FFE473;padding:10px 60px 10px 16px}
+  .hbanner p{margin:0;font-size:14px;line-height:19px;letter-spacing:-.28px;
+    color:var(--near)}
+  .hbanner b{font-weight:500}
+  .hlink{margin-left:4px;font-size:13px;font-weight:500;color:var(--near);
+    text-decoration:underline;white-space:nowrap}
+  .hbx{position:absolute;top:13px;right:16px;width:32px;height:32px;border:none;
+    background:none;cursor:pointer;font-family:inherit;font-size:13px;color:var(--near);
+    display:flex;align-items:center;justify-content:center}
+
+  /* 72px tall, 12px padding, over the photograph — so it is white on the blur
+     to begin with and takes a light ground once the photograph has gone by */
+  .hnav{height:72px;display:flex;align-items:center;gap:16px;padding:12px;
+    -webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);
+    background:rgba(26,18,10,.14);
+    transition:background .35s var(--ease)}
+  .hnav.on{background:rgba(255,255,255,.72)}
+  .hlogo{width:86px;height:28px;margin-right:auto;display:block}
+  .hnav.on .hlogo,.hnav.on .hpill img{filter:brightness(0)}
+  /* the two controls are 48x34 pills with a hairline, not circles */
+  .hpill{width:48px;height:34px;border-radius:24px;border:1px solid #fff;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    transition:border-color .35s var(--ease)}
+  .hnav.on .hpill{border-color:var(--near)}
+  .hpill img{width:22px;height:22px;display:block}
+  .hburger{width:24px;height:24px;position:relative;flex-shrink:0}
+  .hburger i{position:absolute;left:3px;width:18px;height:2px;background:#fff;
+    transition:background .35s var(--ease)}
+  .hburger i:nth-child(1){top:5px}
+  .hburger i:nth-child(2){top:11px}
+  .hburger i:nth-child(3){top:17px}
+  .hnav.on .hburger i{background:var(--near)}
+
+  .hheroimg{position:relative;height:550px;background:#fff;overflow:hidden}
+  /* The clip plays itself, silently and without controls. Its first frame is
+     the poster, so there is a picture there before a byte of video arrives. */
+  .herovid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    display:block;pointer-events:none}
+  /* the photograph dissolves into the peach it sits on, over the last 48px */
+  .hfade{position:absolute;left:0;right:0;bottom:0;height:48px;
+    background:linear-gradient(to bottom,rgba(255,211,146,0) 0%,#FFD392 79.5%,#FFD392 100%)}
+  .hherocap{position:absolute;left:24px;right:24px;bottom:16px;z-index:2;
+    display:flex;flex-direction:column;gap:12px}
+  .hstars{display:flex;align-items:center;gap:6px;margin:0}
+  /* four and a half of five: the orange row is clipped to 90% of its width */
+  .hst{position:relative;display:block;width:90px;overflow:hidden;
+    font-size:16px;line-height:16px;letter-spacing:2px;color:rgba(255,255,255,.35)}
+  .hst i{font-style:normal}
+  .hst::after{content:'\2605\2605\2605\2605\2605';position:absolute;left:0;top:0;
+    width:90%;overflow:hidden;color:var(--signal);white-space:nowrap}
+  .hsc{font-size:12px;line-height:16px;letter-spacing:-.24px;font-weight:500;color:#fff}
+  .hheroimg h1{font-family:'Newsreader',Georgia,serif;font-weight:400;
+    font-size:34px;line-height:34px;letter-spacing:-.68px;color:#fff;margin:0}
+
+  .hherocol{padding:8px 24px 0}
+  .hsub{margin:0 0 16px;font-size:14px;line-height:19px;letter-spacing:-.28px;
+    color:var(--smokey)}
+  .hchecks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .hchecks li{display:flex;gap:8px;align-items:baseline}
+  .hchecks i{font-style:normal;width:13px;flex-shrink:0;font-size:12px;line-height:16px;
+    color:var(--smokey)}
+  .hchecks span{font-size:14px;line-height:19px;letter-spacing:-.28px;color:var(--smokey)}
+  .hctarow{display:flex;flex-direction:column;align-items:center;gap:24px;padding:24px 0}
+  .hcta{width:100%;padding:14px 28px;border-radius:999px;border:none;cursor:pointer;
+    background:var(--signal);color:var(--near);font-family:inherit;font-size:14px;
+    line-height:14px;letter-spacing:2px;text-transform:uppercase;
+    transition:transform .24s var(--spring),background .2s var(--ease)}
+  .hcta:active{transform:scale(.98);transition:transform .09s ease-out}
+  .hlink2{font-size:14px;line-height:19px;letter-spacing:-.28px;
+    color:var(--near);text-decoration:underline}
+
+  /* ── section 2: the four numbers ── */
+  .hfacts{background:#fff;padding:32px 20px}
+  .hfacts h2{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:24px;
+    line-height:26px;letter-spacing:-.48px;color:var(--near);margin:0;text-align:center}
+  .hfacts h2 i{font-style:italic}
+  .hrings{display:grid;grid-template-columns:1fr 1fr;margin-top:16px;padding-bottom: 16px;}
+  .hring{display:flex;flex-direction:column;align-items:center;text-align:center;
+    padding:0px 8px 0}
+  .hring .hi{width:100px;height:100px;background:no-repeat center/contain}
+  .hring b{display:block;margin-top:16px;font-family:'Newsreader',Georgia,serif;
+    font-weight:400;font-size:34px;line-height:34px;letter-spacing:-.68px;color:var(--near)}
+  .hring span{display:block;margin-top:10px;max-width:15ch;
+    font-size:14px;line-height:19px;letter-spacing:-.28px;color:var(--near)}
+  .hfoot{margin:16px 19px 0;text-align:center;font-size:12px;line-height:19px;
+    letter-spacing:-.24px;color:rgba(17,13,10,.55)}
+
+  /* ── section 3: how it works, the dishes and the bundles ── */
+  .hsteps{background:#DCDFB9;padding:32px 0 48px; border-radius:32px; padding-bottom:160px}
+  .hkick{margin:0 24px;font-size:12px;line-height:16px;letter-spacing:-.24px;
+    font-weight:500;color:var(--smokey);opacity:.65}
+  .hsteps h2{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:34px;
+    line-height:34px;letter-spacing:-.68px;color:var(--smokey);margin:12px 24px 0}
+  .hsteps h2 i{font-style:italic}
+  .hsub2{margin:12px 24px 0;font-size:14px;line-height:19px;letter-spacing:-.28px;
+    color:var(--smokey)}
+  /* the three steps hang off a 2px line that runs between the first and last dot */
+  .hpillars{position:relative;margin:21px 24px 0;display:flex;flex-direction:column;gap:32px}
+  .hpillars::before{content:'';position:absolute;left:15px;top:24px;bottom:24px;width:2px;
+    background:rgba(55,45,39,.3)}
+  .hpillar{position:relative;display:flex;gap:40px;align-items:flex-start}
+  .hpillar .hd{width:32px;height:32px;border-radius:16px;flex-shrink:0;
+    background:#DCDFB9 no-repeat center/contain;
+    filter:drop-shadow(0 4px 7px rgba(55,45,39,.18))}
+  .hpillar p{margin:0;display:flex;flex-direction:column;gap:2px}
+  .hpillar b{font-size:16px;line-height:22px;letter-spacing:-.32px;font-weight:500;
+    color:var(--smokey)}
+  .hpillar span{font-size:12px;line-height:16px;letter-spacing:-.24px;color:var(--smokey)}
+
+  /* the dish cards (Figma 4333:24699): 300 wide, 16px apart, 28px corners */
+  .hmeals{display:flex;gap:16px;overflow-x:auto;padding:32px 24px 0;
+    scroll-snap-type:x mandatory;scroll-padding-left:24px;align-items:flex-start}
+  .hmeals::-webkit-scrollbar{height:0}
+  .hmc{flex:0 0 300px;scroll-snap-align:start;background:#fff;border:1px solid var(--g1);
+    border-radius:28px;overflow:hidden;box-shadow:0 3px 12px rgba(55,45,39,.08)}
+  .hmc .hmi{position:relative;height:223.5px;background:#EEE no-repeat center/cover}
+  .hmc .htags{position:absolute;left:14px;right:14px;bottom:11px;
+    display:flex;flex-wrap:wrap;gap:8px}
+  .hmc .htag{background:#fff;border-radius:4px;padding:4px 8px;
+    font-size:8px;line-height:13px;letter-spacing:-.16px;color:var(--near)}
+  .hmc .hmb{padding:16px 16px 0;display:flex;flex-direction:column;gap:4px}
+  .hmc .heb{margin:0;font-size:12px;line-height:16px;letter-spacing:-.24px;
+    font-weight:500;color:var(--smokey)}
+  .hmc h3{margin:0;padding-top:1px;font-family:'Newsreader',Georgia,serif;font-weight:400;
+    font-size:20px;line-height:20px;letter-spacing:-.4px;color:var(--smokey)}
+  .hmc .hpr{margin:0;padding-bottom:12px;display:flex;gap:4.71px;align-items:baseline;
+    font-size:14px;line-height:15px;letter-spacing:-.28px;font-weight:500;color:var(--smokey)}
+  .hmc .hpr s{opacity:.5}
+  .hmc .hmac{display:flex;border-top:1px solid var(--g1)}
+  .hmc .hmac div{flex:1;min-width:0;padding:14px 8px;text-align:center}
+  .hmc .hmac div+div{border-left:1px solid var(--g1)}
+  .hmc .hmac b{display:block;font-family:'Newsreader',Georgia,serif;font-weight:400;
+    font-size:24px;line-height:26px;letter-spacing:-.48px;color:var(--smokey)}
+  .hmc .hmac span{display:block;margin-top:3px;font-size:12px;line-height:16px;
+    letter-spacing:-.24px;font-weight:500;color:var(--smokey)}
+
+
+  /* ── the bar that arrives when the hero's button has gone ── */
+  .hstick{position:absolute;left:0;right:0;bottom:0;z-index:18;background:#fff;
+    box-shadow:0 -2px 6px rgba(55,45,39,.12);padding:16px 16px 20px;
+    opacity:0;transform:translateY(110px);pointer-events:none;
+    transition:opacity .4s var(--ease),transform .55s var(--swing)}
+  .hstick.in{opacity:1;transform:none;pointer-events:auto}
+  .hstick .hlink2{display:block;width:max-content;margin:16px auto 0}
+

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Prototype Studio (and some other static hosts) can serve this page at a
+     URL with no trailing slash, e.g. /p/slug/v0-3 instead of /p/slug/v0-3/.
+     Relative links then resolve one directory too high and every asset
+     404s. Pinning the base to the page's own path fixes that everywhere,
+     and is a no-op on a normal trailing-slash URL. Must run before any
+     relative <link>/<script>/<img> below. -->
+<script>if(location.protocol!=='file:'&&!/\/$/.test(location.pathname))document.write('<base href="'+location.pathname+'/">');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>every</title>
+<meta name="theme-color" content="#ffffff">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- the whole page: the homepage, with the quiz sliding up over it. It fills
+     the browser window exactly — see .device in styles.css. -->
+<div class="device" id="device">
+
+  <!-- the homepage, built to Figma 5355:67233. The banner and the photograph
+       live inside one peach block with a 32px rounded foot; the navigation sits
+       over the photograph and travels with the banner. -->
+  <div class="landing" id="landing">
+
+    <!-- banner and navigation: a direct child of the page, so they stay put
+         the whole way down rather than sticking only within the hero -->
+    <div class="htop" id="htop">
+      <!-- <div class="hbanner">
+        <p><b>Summer-Special:</b> 20% off your first order + 3 FREE
+          Popsicles <a href="#" class="hlink">READ MORE</a></p>
+        <button class="hbx" aria-label="Dismiss">&#10005;</button>
+      </div> -->
+      <header class="hnav" id="hnav">
+        <img class="hlogo" src="img/hp-logo.svg" alt="every">
+        <span class="hpill"><img src="img/hp-account.svg" alt=""></span>
+        <span class="hpill"><img src="img/hp-cart.svg" alt=""></span>
+        <span class="hburger"><i></i><i></i><i></i></span>
+      </header>
+    </div>
+
+    <section class="hhero">
+
+      <div class="hheroimg">
+        <video class="herovid" poster="img/hp-poster.jpg" autoplay muted loop
+          playsinline preload="auto">
+          <source src="img/hero.mp4" type="video/mp4">
+        </video>
+        <div class="hherocap">
+          <p class="hstars">
+            <span class="hst"><i>&#9733;&#9733;&#9733;&#9733;&#9733;</i></span>
+            <span class="hsc">Excellent &nbsp;&middot;&nbsp; 4.5 / 5</span>
+          </p>
+          <h1>Feel-good food.<br>Ready in your freezer.</h1>
+        </div>
+        <span class="hfade"></span>
+      </div>
+
+      <div class="hherocol">
+        <p class="hsub">Wholefood, plant-based meals. Crafted by chefs. On your
+          table in minutes.</p>
+        <ul class="hchecks">
+          <li><i>&#10003;</i><span>Delicious meals &ndash; only a few clicks away</span></li>
+          <li><i>&#10003;</i><span>From 5,43&euro; per meal</span></li>
+          <li><i>&#10003;</i><span>Flexible plan: Skip or cancel anytime</span></li>
+        </ul>
+        <div class="hctarow">
+          <button class="hcta" id="openquiz">Find your routine</button>
+          <a href="#" class="hlink2">Pick your meals</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="hfacts">
+      <h2>Real results after <i>3 months.</i></h2>
+      <div class="hrings" id="hrings"></div>
+      <p class="hfoot">*Self-reported experiences from participants in our 3-month
+        plan consuming every 5x/week. Percentages reflect the share of respondents
+        who reported an improvement in each category.</p>
+    </section>
+
+    <section class="hsteps">
+      <p class="hkick">HOW IT WORKS</p>
+      <h2>From freezer to table in <i>three steps.</i></h2>
+      <p class="hsub2">No planning, no prep, no stress. Pick your meals, heat for
+        10 minutes, and eat. That&rsquo;s it.</p>
+      <div class="hpillars" id="hpillars"></div>
+      <div class="hmeals" id="hmeals"></div>
+    </section>
+  </div>
+
+  <!-- the ground the quiz rises over; it dims the homepage instead of the
+       homepage shrinking back -->
+  <div class="quizbd" id="quizbd"></div>
+
+  <div class="hstick" id="hstick">
+    <button class="hcta" id="openquiz2">Find your routine</button>
+    <a href="#" class="hlink2">Pick your meals</a>
+  </div>
+
+  <!-- the quiz: a sheet over the homepage. The navigation arrives with the
+       results, where there is a cart to get back to. -->
+  <div class="phone" id="phone" aria-hidden="true">
+    <header class="qnav">
+      <button class="logo" id="qlogo">every</button>
+      <span class="nicon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="9" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg></span>
+      <span class="nicon cart" id="qcart">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 8h14l-1 11H6L5 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>
+        <span class="cartdot" id="qcartn">0</span></span>
+      <span class="burger"><i></i><i></i><i></i></span>
+    </header>
+    <div class="screen" id="screen"></div>
+    <div class="foot" id="foot"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
