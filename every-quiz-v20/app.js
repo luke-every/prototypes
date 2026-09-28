@@ -1183,7 +1183,9 @@ function variantA(goal,key){
     ${planSection(goal)}
     ${contentSection(goal,key)}
     ${faqSection(key)}
-    <div class="gotobuy"></div>
+    <div class="buy gotobuy">
+      <button class="rbtn dark" id="gotob">Continue to variant B</button>
+    </div>
   </div>`;
 }
 
@@ -1407,6 +1409,14 @@ function armResult(key){
   const added=()=>{addToCart(sizes[sizeIdx].n);toast('Added — this is a prototype.')};
   document.getElementById('add').onclick=added;
   document.getElementById('add2').onclick=added;
+  /* variant A only — a testing aid: the same answers, shown as variant B from
+     the top. The link follows, so a reload stays on B. */
+  document.getElementById('gotob')?.addEventListener('click',()=>{
+    variant='B';
+    const q=new URLSearchParams(location.search); q.set('variant','b');
+    history.replaceState(null,'',`${location.pathname}?${q}${location.hash}`);
+    showBundle(one('goal')||DEFAULT_GOAL);
+  });
   screenEl.querySelectorAll('.rcard').forEach(b=>
     b.onclick=()=>openRecipe(b.dataset.meal,b.dataset.img,b.dataset.slug));
   document.getElementById('seeall')?.addEventListener('click',()=>openMenu(key));
@@ -1654,6 +1664,7 @@ function showBundle(goal){
     A.goal=[goal]; sizeIdx=1;
     step=STEPS.indexOf('load')-1;
     renderResult();
+    screenEl.scrollTop=0;            /* a new results page always starts at its top */
     screenEl.querySelectorAll(REVEAL_SEL).forEach(e=>e.classList.add('in','instant'));
     phone.classList.add('bundle');
     const r=screenEl.querySelector('.res');
