@@ -52,7 +52,7 @@ const MARQUEE_COUNT=4;
 const Q=[
  {id:'goal',type:'single',q:'What\u2019s your main priority right now?',sub:'',
   o:[['\uD83E\uDDD8','Maximize my protein intake'],['\uD83E\uDD55','Eat lighter to lose weight'],
-     ['\uD83C\uDF5E','Eat well after having a baby'],['\uD83C\uDFDD\uFE0F','Eat well without overthinking it']]},
+     ['\uD83C\uDF7C','Eat well after having a baby'],['\uD83C\uDFDD\uFE0F','Eat well without overthinking it']]},
  {id:'sat',type:'slider',q:'How satisfied are you with how you eat today?',sub:''},
  {id:'challenges',type:'multi',q:'What are your challenges when it comes to eating?',sub:'Pick as many as you like',
   o:[['\u23F1\uFE0F','Finding time to cook'],['\uD83E\uDD14','Deciding what to eat'],
@@ -1183,9 +1183,7 @@ function variantA(goal,key){
     ${planSection(goal)}
     ${contentSection(goal,key)}
     ${faqSection(key)}
-    <div class="buy gotobuy">
-      <button class="rbtn dark" id="gotob">Continue to variant B</button>
-    </div>
+    <div class="gotobuy"></div>
   </div>`;
 }
 
@@ -1409,14 +1407,6 @@ function armResult(key){
   const added=()=>{addToCart(sizes[sizeIdx].n);toast('Added — this is a prototype.')};
   document.getElementById('add').onclick=added;
   document.getElementById('add2').onclick=added;
-  /* variant A only — a testing aid: the same answers, shown as variant B from
-     the top. The link follows, so a reload stays on B. */
-  document.getElementById('gotob')?.addEventListener('click',()=>{
-    variant='B';
-    const q=new URLSearchParams(location.search); q.set('variant','b');
-    history.replaceState(null,'',`${location.pathname}?${q}${location.hash}`);
-    showBundle(one('goal')||DEFAULT_GOAL);
-  });
   screenEl.querySelectorAll('.rcard').forEach(b=>
     b.onclick=()=>openRecipe(b.dataset.meal,b.dataset.img,b.dataset.slug));
   document.getElementById('seeall')?.addEventListener('click',()=>openMenu(key));

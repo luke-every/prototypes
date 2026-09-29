@@ -598,7 +598,7 @@
   .buy{display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:8px}
   /* variant A's page end: room for the sticky add-to-cart bar, which can be
      hovering over the last bit of scroll */
-  .gotobuy{padding:8px 24px 150px}
+  .gotobuy{padding-bottom:120px}
   .subline{margin:0;font-size:12px;line-height:16px;letter-spacing:-.24px;
     color:var(--smokey);text-align:center}
 
