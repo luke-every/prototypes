@@ -191,27 +191,27 @@ const AFF_CHAL={
  'Finding time to cook':
   {img:'img/chal-time.jpg',eb:'',
    head:'All of our meals are ready in 10 minutes',
-   sub:'No prep, no planning. Just heat and eat.'},
+   sub:''},
  'Deciding what to eat':
   {img:'img/chal-decide.jpg',eb:'',
    head:'All the planning is done for you',
-   sub:'A routine that runs itself. No deciding.'},
+   sub:''},
  'Eating a balanced diet':
   {img:'img/chal-balance.jpg',eb:'',
    head:'Every meal is pre-portioned and balanced.',
-   sub:'Containing around 20 ingredients, already cut and cooked.'},
+   sub:''},
  'Wasting food':
   {img:'img/chal-waste.jpg',eb:'',
    head:'Meals are delivered to your door',
-   sub:'Frozen. Ready when you are.'},
+   sub:''},
  'Cooking isn’t my thing':
   {img:'img/chal-cooking.jpg',eb:'',
    head:'All cooking is done for you, by us.',
-   sub:'Heat, plate, done. All in under 10 minutes.'},
+   sub:''},
  'Eating well on a budget':
   {img:'img/chal-budget.jpg',eb:'',
    head:'From €5,43 per meal',
-   sub:'Your plan is flexible: skip or cancel anytime.'}};
+   sub:''}};
 const AFF_CHAL_DEFAULT=AFF_CHAL['Finding time to cook'];
 
 /* ═══════════ SCORING ═══════════
