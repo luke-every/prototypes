@@ -298,22 +298,22 @@ const SIZES=[
 /* The same set on every bundle and in both variants. Answers may carry <br>
    where the copy has a break of its own. */
 const FAQ=[
- ['How does the subscription work?',
-  'Simply select the box size, choose your meals and then pick your delivery date and frequency. Your box will be delivered to your door, ready for you to enjoy!<br><br>Our subscription is fully flexible so you can change box size, meals and delivery frequency to suit your needs.'],
- ['Is there a minimum commitment period for the subscription?',
-  'No, there is no minimum commitment period. The subscription can be cancelled or paused at any time.'],
- ['Is there a minimum order quantity for the subscription?',
-  'You can determine the box size when you create your delivery schedule. The subscription has a minimum order quantity of 6 products per delivery.'],
- ['Can I make changes to my box?',
-  'We know that tastes and cravings can change. You can adjust your box size and add or replace new bowls any time with just one click through your account.'],
- ['How does shipping work?',
-  'The day before your delivery date, we package your order in our warehouse and hand it over to our shipping partner. Our frozen meals are shipped using sustainable insulation and cooling elements via insured frozen shipping. Please ensure you are available at the time of delivery to receive your package (you can find the time window in the tracking link). For deliveries within Germany, you can narrow the delivery time window further and select a pre-12-noon delivery for an additional fee.<br><br>We generally do not deliver on Mondays, public holidays, or the business day immediately following a public holiday.'],
- ['How do I know when my next delivery will arrive?',
-  'You are afraid that you will miss your delivery date? Don\u2019t worry, we will send you a reminder in advance. You can still make changes and adjustments at short notice.'],
- ['Can I change my delivery date?',
-  'You will select your first delivery date when you place your first order. You can then adjust the delivery interval any time in your account. Based on your delivery interval, all upcoming delivery dates will be suggested to you. You will receive a notification before each upcoming delivery.'],
- ['How many meals fit into my freezer?',
-  'Our meals are packaged in practical, flexible pouches. Each portion measures 26 cm x 23.5 cm and is 2.5 cm thick. Thanks to the flexible packaging, the pouches can be stacked efficiently.<br><br>Small, built-in freezer compartment: At least 8 pouches fit here.<br>Larger freezer: Larger models can easily accommodate 20 meals or more, depending on how they are arranged.<br><br>This allows you to make the best use of your space and keep a well-stocked supply!']
+ ['Can I choose my own dishes?',
+  'Yes! You can choose your own meals when building your box, and swap or replace them any time with just one click through your account.'],
+ ['How do I prepare the dishes?',
+  'Simply heat and enjoy \u2014 each meal is fully cooked and ready in minutes, straight from the freezer to your table.'],
+ ['How many dishes fit in a standard freezer?',
+  'Our meals are packaged in practical, flexible pouches, so they stack efficiently. A small, built-in freezer compartment fits at least 8 pouches, while a larger freezer can easily hold 20 meals or more depending on how they\u2019re arranged.'],
+ ['Can I pause or cancel my subscription at any time?',
+  'Yes, there is no minimum commitment period \u2014 you can pause or cancel your subscription at any time.'],
+ ['Are the dishes already portioned for one person?',
+  'Yes, every meal is portioned as a single serving, ready to heat and enjoy.'],
+ ['How long do the dishes keep in the freezer?',
+  'Thanks to flash-freezing, our meals stay fresh in your freezer for several months \u2014 just check the best-before date on the pack.'],
+ ['Is there a minimum subscription period?',
+  'No, there\u2019s no minimum subscription period \u2014 you\u2019re free to skip, pause, or cancel whenever you like.'],
+ ['How does delivery work?',
+  'The day before your delivery date, we pack your order and hand it to our shipping partner. Meals are shipped frozen using sustainable insulation and cooling elements, and you\u2019ll get a tracking link with your delivery window.']
 ];
 
 const BUNDLES=[
