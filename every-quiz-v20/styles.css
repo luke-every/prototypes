@@ -125,7 +125,7 @@
   /* one bar, not seven: an orange shape that travels along a single track as
      the quiz progresses, so the movement itself carries the sense of progress */
   .prog{flex:1;height:7px;border-radius:99px;background:#EAE6DE;overflow:hidden}
-  .prog i{display:block;height:100%;width:0;border-radius:99px;background:var(--orange);
+  .prog i{display:block;height:100%;width:0;border-radius:99px;background:var(--smokey);
     transition:width .62s var(--swing)}
   .xbtn{width:30px;height:30px;border:none;background:none;cursor:pointer;font-size:19px;
     color:var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
@@ -208,14 +208,15 @@
   .phone.white .foot{background:linear-gradient(to bottom,
     color-mix(in srgb, #fff 0%, transparent) 0%, #fff 60%)}
   .fspace{flex:1;height:56px}
-  .cta{flex:1;height:56px;border-radius:999px;border:none;background:var(--orange);color:#fff;
+  /* the quiz's own buttons are dark; orange is kept for what has been picked */
+  .cta{flex:1;height:56px;border-radius:999px;border:none;background:var(--smokey);color:#fff;
     font-family:inherit;font-size:14px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
     cursor:pointer;transition:opacity .3s var(--ease),transform .3s var(--ease),background .2s}
   .cta[disabled]{opacity:.35;cursor:default}
   /* on multi-select the Continue button holds its space before it is earned,
      so the question above it never shifts when the first option is picked */
   .cta.hid{opacity:0;transform:translateY(6px);pointer-events:none}
-  .cta:active{background:var(--orange-d)}
+  .cta:active{background:#241D19}
 
   /* ── affirmation step ──
      A pause between questions: an icon, a headline and a line. Nothing to tap
